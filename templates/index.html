@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>NexusCorp Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <nav class="bg-blue-600 p-4 flex justify-between shadow-2xl">
+        <span class="text-xl font-black">NEXUS CORP 🚀</span>
+        <span>Bienvenue, {{ user | safe }}</span>
+    </nav>
+
+    <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-blue-500">
+            <h3 class="font-bold text-lg mb-4">Annuaire du Personnel</h3>
+            <input id="staff_name" type="text" placeholder="Nom..." class="bg-slate-700 p-2 w-full rounded mb-2">
+            <button onclick="search()" class="bg-blue-500 w-full py-2 rounded">Chercher</button>
+            <div id="staff_res" class="mt-2 text-sm text-slate-400"></div>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-red-500">
+            <h3 class="font-bold text-lg mb-4">Diagnostic Réseau</h3>
+            <input id="host" type="text" placeholder="IP..." class="bg-slate-700 p-2 w-full rounded mb-2">
+            <button onclick="ping()" class="bg-red-500 w-full py-2 rounded">Ping</button>
+            <pre id="ping_res" class="mt-2 text-xs bg-black p-2 rounded"></pre>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+            <h3 class="font-bold text-lg mb-4">Rapports Financiers</h3>
+            <select id="file" class="bg-slate-700 p-2 w-full rounded mb-2">
+                <option value="report_q1.txt">Rapport T1</option>
+                <option value="report_q2.txt">Rapport T2</option>
+            </select>
+            <button onclick="view()" class="bg-green-500 w-full py-2 rounded">Voir</button>
+        </div>
+    </div>
+
+    <script>
+        async function search() {
+            const n = document.getElementById('staff_name').value;
+            const r = await fetch(`/api/staff/search?name=${n}`);
+            const d = await r.json();
+            document.getElementById('staff_res').innerText = JSON.stringify(d);
+        }
+        async function ping() {
+            const h = document.getElementById('host').value;
+            const r = await fetch(`/api/network/ping?host=${h}`);
+            const d = await r.json();
+            document.getElementById('ping_res').innerText = d.output;
+        }
+        async function view() {
+            const f = document.getElementById('file').value;
+            window.location.href = `/api/reports/view?file=${f}`;
+        }
+    </script>
+</body>
+</html>
