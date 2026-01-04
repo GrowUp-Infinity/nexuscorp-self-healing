@@ -5,6 +5,10 @@ on: [push] # Se déclenche à chaque envoi de code
 jobs:
   vulnerability-scan:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: write # Important pour que l'IA puisse corriger le code
+
     steps:
       - name: 1. Recuperer le code
         uses: actions/checkout@v4
@@ -39,3 +43,20 @@ jobs:
         with:
           name: security-report
           path: trivy-report.json
+
+      - name: 6. Lancer l'auto-guérison par l'IA
+        if: failure() # S'exécute seulement si le scan (étape 3) a échoué
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          pip install -U google-generative-ai
+          python ai_remediator.py
+
+      - name: 7. Commit et Push du correctif
+        if: failure()
+        run: |
+          git config --global user.name "beeboylinux"
+          git config --global user.email "beeboylinux@gmail.com"
+          git add requirements.txt
+          git commit -m "fix: auto-remediation of security vulnerabilities by Gemini"
+          git push
