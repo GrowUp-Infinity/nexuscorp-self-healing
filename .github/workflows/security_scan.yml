@@ -43,22 +43,32 @@ jobs:
         with:
           name: security-report
           path: trivy-report.json
+          
+# Ajoute cette étape juste AVANT l'étape 6 pour garantir que Python est prêt
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
       - name: 6. Lancer l'auto-guérison par l'IA
         if: failure()
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # Vérifie bien que c'est un SECRET
         run: |
-          pip install -U google-generative-ai
+          python -m pip install --upgrade pip
+          python -m pip install -U google-generative-ai
           python ai_remediator.py
 
       - name: 7. Commit et Push du correctif
         if: failure()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Utilisation du token intégré
         run: |
           git config --global user.name "beeboylinux"
           git config --global user.email "beeboylinux@gmail.com"
+          # On vérifie s'il y a vraiment un changement avant de commit pour éviter l'erreur
           git add requirements.txt
-          git commit -m "fix: auto-remediation of security vulnerabilities by Gemini"
-          git push origin HEAD:main
+          if git diff --staged --quiet; then
+            echo "Aucune modification apportée par l'IA."
+          else
+            git commit -m "fix: auto-remediation of security vulnerabilities by Gemini"
+            git push origin HEAD:main
+          fi
